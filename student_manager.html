@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Student Manager</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --card: #161d2e;
+      --border: #1e2d45;
+      --accent: #3b82f6;
+      --green: #10b981;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --font-display: 'Syne', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-display);
+      min-height: 100vh;
+      padding: 32px 16px 60px;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(59,130,246,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(59,130,246,0.04) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .wrapper {
+      max-width: 960px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ── HEADER ── */
+    header {
+      text-align: center;
+      margin-bottom: 40px;
+      animation: fadeDown 0.6s ease both;
+    }
+
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .badge {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--accent);
+      border: 1px solid var(--accent);
+      padding: 3px 12px;
+      border-radius: 20px;
+      margin-bottom: 14px;
+      letter-spacing: 2px;
+    }
+
+    h1 {
+      font-size: clamp(32px, 6vw, 52px);
+      font-weight: 800;
+      letter-spacing: -1.5px;
+      line-height: 1;
+    }
+
+    h1 span { color: var(--accent); }
+
+    .sub {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 10px;
+    }
+
+    /* ── STATS ROW ── */
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 28px;
+      animation: fadeUp 0.6s 0.1s ease both;
+    }
+
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .stat-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 18px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 2px;
+      background: var(--accent);
+    }
+
+    .stat-card.green::before { background: var(--green); }
+    .stat-card.yellow::before { background: var(--yellow); }
+    .stat-card.red::before { background: var(--red); }
+
+    .stat-label {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -1px;
+    }
+
+    .stat-value.blue  { color: var(--accent); }
+    .stat-value.green { color: var(--green); }
+    .stat-value.yellow{ color: var(--yellow); }
+    .stat-value.red   { color: var(--red); }
+
+    /* ── LAYOUT ── */
+    .layout {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      gap: 20px;
+      animation: fadeUp 0.6s 0.2s ease both;
+    }
+
+    /* ── FORM PANEL ── */
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 24px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .panel-title::before {
+      content: '';
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 1px;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+    }
+
+    input {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.12);
+    }
+
+    input::placeholder { color: var(--muted); }
+
+    .marks-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.5px;
+      margin-top: 4px;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .btn-primary:hover {
+      background: #2563eb;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(59,130,246,0.3);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--red);
+      color: var(--red);
+    }
+
+    /* ── TABLE PANEL ── */
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    .search-bar {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-bar input {
+      flex: 1;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      color: var(--muted);
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(30,45,69,0.6);
+      transition: background 0.15s;
+      animation: rowIn 0.3s ease both;
+    }
+
+    @keyframes rowIn {
+      from { opacity: 0; transform: translateX(-8px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    tbody tr:hover { background: rgba(59,130,246,0.05); }
+
+    tbody td {
+      padding: 12px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    .grade-badge {
+      display: inline-block;
+      padding: 2px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    .grade-O  { background: rgba(16,185,129,0.15); color: var(--green); }
+    .grade-A  { background: rgba(59,130,246,0.15); color: var(--accent); }
+    .grade-B  { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .grade-C  { background: rgba(239,68,68,0.15);  color: var(--red); }
+    .grade-F  { background: rgba(100,116,139,0.15);color: var(--muted); }
+
+    .avg-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .avg-track {
+      flex: 1;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+      min-width: 60px;
+    }
+
+    .avg-fill {
+      height: 100%;
+      border-radius: 2px;
+      transition: width 0.6s ease;
+    }
+
+    .btn-del {
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-del:hover { color: var(--red); background: rgba(239,68,68,0.1); }
+
+    .empty-state {
+      text-align: center;
+      padding: 48px 0;
+      color: var(--muted);
+      font-family: var(--font-mono);
+      font-size: 13px;
+    }
+
+    .empty-state .icon { font-size: 36px; margin-bottom: 12px; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--green);
+      color: #fff;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      padding: 12px 20px;
+      border-radius: 8px;
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 100;
+      font-weight: 500;
+    }
+
+    .toast.show { transform: translateY(0); opacity: 1; }
+
+    @media (max-width: 700px) {
+      .layout { grid-template-columns: 1fr; }
+      .stats-row { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- HEADER -->
+  <header>
+    <div class="badge">ASSIGNMENT · 28 / 02 / 2026</div>
+    <h1>Student <span>Manager</span></h1>
+    <div class="sub">// Arrays &amp; Objects · Store Marks · Calculate Averages</div>
+  </header>
+
+  <!-- STATS -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-label">Total Students</div>
+      <div class="stat-value blue" id="stat-total">0</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Class Average</div>
+      <div class="stat-value green" id="stat-avg">—</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Highest Score</div>
+      <div class="stat-value yellow" id="stat-high">—</div>
+    </div>
+    <div class="stat-card red">
+      <div class="stat-label">Lowest Score</div>
+      <div class="stat-value red" id="stat-low">—</div>
+    </div>
+  </div>
+
+  <!-- MAIN LAYOUT -->
+  <div class="layout">
+
+    <!-- FORM -->
+    <div class="panel">
+      <div class="panel-title">Add Student</div>
+
+      <div class="form-group">
+        <label>Student Name</label>
+        <input type="text" id="inp-name" placeholder="e.g. Mohammad Salman" />
+      </div>
+
+      <div class="form-group">
+        <label>Roll Number</label>
+        <input type="text" id="inp-roll" placeholder="e.g. CS101" />
+      </div>
+
+      <div class="form-group">
+        <label>Subject Marks (out of 100)</label>
+        <div class="marks-grid">
+          <input type="number" id="m1" placeholder="Maths" min="0" max="100"/>
+          <input type="number" id="m2" placeholder="Physics" min="0" max="100"/>
+          <input type="number" id="m3" placeholder="Chemistry" min="0" max="100"/>
+          <input type="number" id="m4" placeholder="English" min="0" max="100"/>
+          <input type="number" id="m5" placeholder="CS" min="0" max="100"/>
+          <input type="number" id="m6" placeholder="DSA" min="0" max="100"/>
+        </div>
+      </div>
+
+      <button class="btn btn-primary" onclick="addStudent()">＋ Add Student</button>
+      <button class="btn btn-secondary" onclick="clearAll()">✕ Clear All Students</button>
+    </div>
+
+    <!-- TABLE -->
+    <div class="panel">
+      <div class="panel-title">Student Records</div>
+
+      <div class="search-bar">
+        <input type="text" id="search" placeholder="Search by name or roll number..." oninput="renderTable()" />
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Roll No</th>
+              <th>Name</th>
+              <th>Marks</th>
+              <th>Average</th>
+              <th>Grade</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+        <div class="empty-state" id="empty-state">
+          <div class="icon">📋</div>
+          No students added yet.<br/>Fill the form to get started.
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  // ─────────────────────────────────────────────
+  // DATA STRUCTURE: Array of Student Objects
+  // Each student object stores:
+  //   - name, roll, marks (array of 6 subjects)
+  //   - average (calculated), grade (derived)
+  // ─────────────────────────────────────────────
+
+  let students = [];  // Array to hold all student objects
+
+  const subjects = ["Maths", "Physics", "Chemistry", "English", "CS", "DSA"];
+
+  // ── Calculate average from marks array ────────
+  function calculateAverage(marksArray) {
+    const total = marksArray.reduce((sum, mark) => sum + mark, 0);
+    return parseFloat((total / marksArray.length).toFixed(2));
+  }
+
+  // ── Assign grade based on average ─────────────
+  function getGrade(avg) {
+    if (avg >= 90) return { grade: "O",  label: "Outstanding" };
+    if (avg >= 75) return { grade: "A",  label: "Excellent" };
+    if (avg >= 60) return { grade: "B",  label: "Good" };
+    if (avg >= 45) return { grade: "C",  label: "Average" };
+    return             { grade: "F",  label: "Fail" };
+  }
+
+  // ── Get color for average bar ──────────────────
+  function getBarColor(avg) {
+    if (avg >= 75) return "#10b981";
+    if (avg >= 60) return "#3b82f6";
+    if (avg >= 45) return "#f59e0b";
+    return "#ef4444";
+  }
+
+  // ── ADD STUDENT ────────────────────────────────
+  function addStudent() {
+    const name = document.getElementById("inp-name").value.trim();
+    const roll = document.getElementById("inp-roll").value.trim();
+
+    if (!name || !roll) {
+      showToast("⚠ Please enter name and roll number!", "warn");
+      return;
+    }
+
+    // Collect marks from 6 inputs into a marks array
+    const marks = [];
+    for (let i = 1; i <= 6; i++) {
+      const val = parseFloat(document.getElementById("m" + i).value);
+      if (isNaN(val) || val < 0 || val > 100) {
+        showToast(`⚠ Enter valid marks for ${subjects[i-1]}!`, "warn");
+        return;
+      }
+      marks.push(val);
+    }
+
+    // Build a student object with all details
+    const student = {
+      id:      Date.now(),              // unique id
+      name:    name,                    // student name (string)
+      roll:    roll,                    // roll number (string)
+      marks:   marks,                   // marks array [m1, m2, m3, m4, m5, m6]
+      average: calculateAverage(marks), // computed average (number)
+      grade:   getGrade(calculateAverage(marks)).grade // derived grade (string)
+    };
+
+    students.push(student); // push object into students array
+
+    clearForm();
+    renderTable();
+    updateStats();
+    showToast(`✓ ${name} added successfully!`);
+  }
+
+  // ── REMOVE STUDENT ─────────────────────────────
+  function removeStudent(id) {
+    students = students.filter(s => s.id !== id); // filter array
+    renderTable();
+    updateStats();
+    showToast("Student removed.", "warn");
+  }
+
+  // ── RENDER TABLE ───────────────────────────────
+  function renderTable() {
+    const query  = document.getElementById("search").value.toLowerCase();
+    const tbody  = document.getElementById("table-body");
+    const empty  = document.getElementById("empty-state");
+
+    // Filter students array based on search
+    const filtered = students.filter(s =>
+      s.name.toLowerCase().includes(query) ||
+      s.roll.toLowerCase().includes(query)
+    );
+
+    if (filtered.length === 0) {
+      tbody.innerHTML = "";
+      empty.style.display = "block";
+      return;
+    }
+
+    empty.style.display = "none";
+    tbody.innerHTML = filtered.map(s => {
+      const { grade, label } = getGrade(s.average);
+      const barColor = getBarColor(s.average);
+      const marksStr = s.marks.map((m, i) =>
+        `<span title="${subjects[i]}" style="font-size:11px;color:var(--muted)">${subjects[i][0]}:${m}</span>`
+      ).join("  ");
+
+      return `
+        <tr>
+          <td style="color:var(--accent);font-weight:600">${s.roll}</td>
+          <td style="font-weight:600;font-family:var(--font-display)">${s.name}</td>
+          <td style="font-size:11px;line-height:2">${marksStr}</td>
+          <td>
+            <div class="avg-bar">
+              <span style="min-width:38px;font-weight:600">${s.average}</span>
+              <div class="avg-track">
+                <div class="avg-fill" style="width:${s.average}%;background:${barColor}"></div>
+              </div>
+            </div>
+          </td>
+          <td><span class="grade-badge grade-${grade}" title="${label}">${grade}</span></td>
+          <td><button class="btn-del" onclick="removeStudent(${s.id})" title="Remove">✕</button></td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  // ── UPDATE STATS ───────────────────────────────
+  function updateStats() {
+    document.getElementById("stat-total").textContent = students.length;
+
+    if (students.length === 0) {
+      document.getElementById("stat-avg").textContent  = "—";
+      document.getElementById("stat-high").textContent = "—";
+      document.getElementById("stat-low").textContent  = "—";
+      return;
+    }
+
+    // Use array methods to compute stats from students array
+    const averages = students.map(s => s.average);  // map to averages array
+    const classAvg = (averages.reduce((a, b) => a + b, 0) / averages.length).toFixed(1);
+    const highest  = Math.max(...averages).toFixed(1);
+    const lowest   = Math.min(...averages).toFixed(1);
+
+    document.getElementById("stat-avg").textContent  = classAvg;
+    document.getElementById("stat-high").textContent = highest;
+    document.getElementById("stat-low").textContent  = lowest;
+  }
+
+  // ── CLEAR FORM ─────────────────────────────────
+  function clearForm() {
+    ["inp-name","inp-roll","m1","m2","m3","m4","m5","m6"]
+      .forEach(id => document.getElementById(id).value = "");
+  }
+
+  // ── CLEAR ALL ──────────────────────────────────
+  function clearAll() {
+    if (students.length === 0) return;
+    if (confirm("Remove all students?")) {
+      students = [];
+      renderTable();
+      updateStats();
+      showToast("All records cleared.", "warn");
+    }
+  }
+
+  // ── TOAST ──────────────────────────────────────
+  function showToast(msg, type = "success") {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.style.background = type === "warn" ? "#f59e0b" : "#10b981";
+    t.classList.add("show");
+    setTimeout(() => t.classList.remove("show"), 2800);
+  }
+
+  // ── LOAD SAMPLE DATA ───────────────────────────
+  function loadSamples() {
+    const samples = [
+      { name: "Mohammad Salman",  roll: "CS101", marks: [92, 88, 85, 90, 95, 91] },
+      { name: "Aisha Khan",       roll: "CS102", marks: [78, 72, 80, 76, 82, 75] },
+      { name: "Rohan Sharma",     roll: "CS103", marks: [65, 60, 55, 70, 68, 62] },
+      { name: "Priya Patel",      roll: "CS104", marks: [45, 50, 48, 52, 44, 46] },
+      { name: "Zaid Mirza",       roll: "CS105", marks: [88, 91, 87, 93, 90, 89] },
+    ];
+
+    samples.forEach(s => {
+      students.push({
+        id:      Date.now() + Math.random(),
+        name:    s.name,
+        roll:    s.roll,
+        marks:   s.marks,
+        average: calculateAverage(s.marks),
+        grade:   getGrade(calculateAverage(s.marks)).grade
+      });
+    });
+
+    renderTable();
+    updateStats();
+    showToast("✓ Sample data loaded!");
+  }
+
+  // Load sample data on start
+  loadSamples();
+</script>
+</body>
+</html>
